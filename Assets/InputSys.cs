@@ -19,15 +19,19 @@ public class InputSys : MonoBehaviour
 
 
     public TugOfWar tow;
-    public GameObject dude;
+    //public GameObject dude;
     private Animator anim;
+
+    public GameObject bloodParticle;
+    public float bloodCD;
+    private float bloodTimer;
 
     // Start is called before the first frame update
     void Start()
     {
         tow = GameObject.Find("TugOfWar").GetComponent<TugOfWar>();
 
-        anim = dude.transform.GetChild(0).GetComponent<Animator>();
+        anim = transform.GetChild(0).GetComponent<Animator>();
     }
 
     // Update is called once per frame
@@ -535,5 +539,29 @@ public class InputSys : MonoBehaviour
         }
 
         return pos;
+    }
+
+    private void OnTriggerEnter(Collider other)
+    {
+        if (other.tag == "lava")
+        {
+            Instantiate(bloodParticle, transform.position + new Vector3(Mathf.Sign(transform.localScale.z) * 0.5f, 0f, 0f), Quaternion.identity);
+        }
+    }
+
+    private void OnTriggerStay(Collider other)
+    {
+        if (other.tag == "lava")
+        {
+            if (bloodTimer > bloodCD)
+            {
+                bloodTimer = 0f;
+                Instantiate(bloodParticle, transform.position + new Vector3(Mathf.Sign(transform.localScale.z) * 0.5f, 0f, 0f), Quaternion.identity);
+            }
+            else
+            {
+                bloodTimer += Time.deltaTime;
+            }
+        }
     }
 }

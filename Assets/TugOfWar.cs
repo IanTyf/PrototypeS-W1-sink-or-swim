@@ -24,5 +24,7 @@ public class TugOfWar : MonoBehaviour
         float x = Mathf.Lerp(transform.position.x, targetXPos, Time.fixedDeltaTime * 10f);
 
         transform.position = new Vector3(x, transform.position.y, transform.position.z);
+
+        rightSideForce += Time.deltaTime * 0.5f;
     }
 }
