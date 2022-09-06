@@ -847,7 +847,7 @@ MonoBehaviour:
   rightForce: 0
   tow: {fileID: 0}
   bloodParticle: {fileID: 4199679936795454482, guid: 8d1f09da5ab267845b377d2b527cc15d, type: 3}
-  bloodCD: 0
+  bloodCD: 0.1
 --- !u!65 &1494596009
 BoxCollider:
   m_ObjectHideFlags: 0

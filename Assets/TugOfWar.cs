@@ -25,6 +25,6 @@ public class TugOfWar : MonoBehaviour
 
         transform.position = new Vector3(x, transform.position.y, transform.position.z);
 
-        rightSideForce += Time.deltaTime * 0.5f;
+        rightSideForce += Time.fixedDeltaTime * 0.5f;
     }
 }
