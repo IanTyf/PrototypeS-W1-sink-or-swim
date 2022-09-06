@@ -4,6 +4,8 @@ using UnityEngine;
 
 public class InputSys : MonoBehaviour
 {
+    public int team;
+
     public float leftForce;
     public float rightForce;
 
@@ -15,16 +17,23 @@ public class InputSys : MonoBehaviour
     private Vector2 prevLeftDir = Vector2.zero;
     private Vector2 prevRightDir = Vector2.zero;
 
+
+    public TugOfWar tow;
+    public GameObject dude;
+    private Animator anim;
+
     // Start is called before the first frame update
     void Start()
     {
-        
+        tow = GameObject.Find("TugOfWar").GetComponent<TugOfWar>();
+
+        anim = dude.transform.GetChild(0).GetComponent<Animator>();
     }
 
     // Update is called once per frame
     void Update()
     {
-
+        speedDown(1f);
         string curKeys = "";
 
         leftKeys = "";
@@ -65,6 +74,11 @@ public class InputSys : MonoBehaviour
                 {
                     // success
                     leftForce += Time.deltaTime * 10f;
+
+                    speedUp(30f);
+
+                    if (team == 0) addToLeft(Time.deltaTime * 10f);
+                    else if (team == 1) addToRight(Time.deltaTime * 10f);
                     break;
                 }
                 else
@@ -91,6 +105,11 @@ public class InputSys : MonoBehaviour
                 {
                     // success
                     rightForce += Time.deltaTime * 10f;
+
+                    speedUp(30f);
+
+                    if (team == 0) addToLeft(Time.deltaTime * 10f);
+                    else if (team == 1) addToRight(Time.deltaTime * 10f);
                     break;
                 }
                 else
@@ -100,7 +119,32 @@ public class InputSys : MonoBehaviour
             }
         }
 
+    }
 
+    private void speedUp(float spd)
+    {
+        float curSpd = anim.GetFloat("speedMult");
+        float newSpd = curSpd + Time.deltaTime * spd;
+        if (newSpd > 1) newSpd = 1;
+        anim.SetFloat("speedMult", newSpd);
+    }
+
+    private void speedDown(float spd)
+    {
+        float curSpd = anim.GetFloat("speedMult");
+        float newSpd = curSpd - Time.deltaTime * spd;
+        if (newSpd < 0) newSpd = 0;
+        anim.SetFloat("speedMult", newSpd);
+    }
+
+    private void addToLeft(float val)
+    {
+        tow.leftSideForce += val;
+    }
+
+    private void addToRight(float val)
+    {
+        tow.rightSideForce += val;
     }
 
     private Vector2 getKeyPos(string key)
