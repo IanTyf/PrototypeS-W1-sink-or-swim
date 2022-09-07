@@ -1,8 +1,9 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using FishNet.Object;
 
-public class InputSys : MonoBehaviour
+public class InputSys : NetworkBehaviour
 {
     public int team;
 
@@ -26,17 +27,69 @@ public class InputSys : MonoBehaviour
     public float bloodCD;
     private float bloodTimer;
 
+
+    private bool started;
+    public override void OnStartClient()
+    {
+        base.OnStartClient();
+        
+    }
+
+    public override void OnStopClient()
+    {
+        base.OnStopClient();
+        if (IsOwner)
+        {
+            Debug.Log("leaving");
+            removePlayer(team);
+        }
+
+    }
+
     // Start is called before the first frame update
     void Start()
     {
         tow = GameObject.Find("TugOfWar").GetComponent<TugOfWar>();
 
         anim = transform.GetChild(0).GetComponent<Animator>();
+
+        transform.SetParent(tow.transform);
     }
 
     // Update is called once per frame
     void Update()
     {
+        if (!base.IsOwner) return;
+
+        if (!started)
+        {
+            int playerCount = tow.transform.childCount - 2;
+            int leftPlayer = (playerCount + 1) / 2;
+            int rightPlayer = (playerCount) / 2;
+            Debug.Log(leftPlayer + ", " + rightPlayer);
+
+            if (leftPlayer == 3 && rightPlayer == 3) Destroy(this.gameObject);
+
+
+            if (leftPlayer <= rightPlayer)
+            {
+                transform.localPosition = new Vector3(-6.791f * ((3f - leftPlayer) / 3f), 0f, -0.17f);
+                team = 0;
+            }
+            else
+            {
+                transform.localPosition = new Vector3(6.791f * ((3f - rightPlayer) / 3f), 0f, -0.17f);
+                transform.localScale = new Vector3(1.8f, 1f, -1.5f);
+                team = 1;
+            }
+
+            GetComponent<BoxCollider>().enabled = true;
+
+            addPlayer();
+            started = true;
+        }
+
+
         speedDown(1f);
         string curKeys = "";
 
@@ -79,7 +132,7 @@ public class InputSys : MonoBehaviour
                     // success
                     leftForce += Time.deltaTime * 10f;
 
-                    speedUp(30f);
+                    speedUp(50f);
 
                     if (team == 0) addToLeft(Time.deltaTime * 10f);
                     else if (team == 1) addToRight(Time.deltaTime * 10f);
@@ -110,7 +163,7 @@ public class InputSys : MonoBehaviour
                     // success
                     rightForce += Time.deltaTime * 10f;
 
-                    speedUp(30f);
+                    speedUp(50f);
 
                     if (team == 0) addToLeft(Time.deltaTime * 10f);
                     else if (team == 1) addToRight(Time.deltaTime * 10f);
@@ -141,14 +194,29 @@ public class InputSys : MonoBehaviour
         anim.SetFloat("speedMult", newSpd);
     }
 
+    [ServerRpc]
     private void addToLeft(float val)
     {
         tow.leftSideForce += val;
     }
 
+    [ServerRpc]
     private void addToRight(float val)
     {
         tow.rightSideForce += val;
+    }
+
+    [ServerRpc]
+    private void addPlayer()
+    {
+        tow.AddPlayer();
+    }
+
+    [ServerRpc]
+    private void removePlayer(int team)
+    {
+        Debug.Log("leaving, sending rpc");
+        tow.RemovePlayer(team);
     }
 
     private Vector2 getKeyPos(string key)
