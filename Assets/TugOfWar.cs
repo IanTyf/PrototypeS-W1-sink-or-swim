@@ -77,5 +77,13 @@ public class TugOfWar : NetworkBehaviour
             rightPlayer--;
         }
     }
+
+    public void ResetGame()
+    {
+        Debug.Log("resetting pos...");
+        transform.position = Vector3.zero;
+        leftSideForce = 0;
+        rightSideForce = 0;
+    }
     
 }

@@ -5,7 +5,10 @@ using FishNet.Object;
 
 public class InputSys : NetworkBehaviour
 {
+    public Material mat;
+
     public int team;
+    public int pos;
 
     public float leftForce;
     public float rightForce;
@@ -63,6 +66,7 @@ public class InputSys : NetworkBehaviour
 
         if (!started)
         {
+            /*
             int playerCount = tow.transform.childCount - 2;
             int leftPlayer = (playerCount + 1) / 2;
             int rightPlayer = (playerCount) / 2;
@@ -82,13 +86,36 @@ public class InputSys : NetworkBehaviour
                 transform.localScale = new Vector3(1.8f, 1f, -1.5f);
                 team = 1;
             }
+            */
+
+            int p = findPos();
+            if (p == -1) Destroy(this.gameObject);
+            else
+            {
+                if (p < 3)
+                {
+                    team = 0;
+                    transform.localPosition = new Vector3(-6.791f * ((3f - p) / 3f), 0f, -0.17f);
+                }
+                else
+                {
+                    team = 1;
+                    transform.localPosition = new Vector3(6.791f * ((6f - p) / 3f), 0f, -0.17f);
+                    transform.localScale = new Vector3(1.8f, 1f, -1.5f);
+                }
+            }
 
             GetComponent<BoxCollider>().enabled = true;
+            transform.GetChild(0).GetChild(0).GetComponent<SkinnedMeshRenderer>().material = mat;
 
             addPlayer();
             started = true;
         }
 
+        if (Input.GetMouseButtonDown(1))
+        {
+            resetGame();
+        }
 
         speedDown(1f);
         string curKeys = "";
@@ -176,6 +203,8 @@ public class InputSys : NetworkBehaviour
             }
         }
 
+        
+
     }
 
     private void speedUp(float spd)
@@ -217,6 +246,50 @@ public class InputSys : NetworkBehaviour
     {
         Debug.Log("leaving, sending rpc");
         tow.RemovePlayer(team);
+    }
+
+    [ServerRpc]
+    private void resetGame()
+    {
+        Debug.Log("sending rpc");
+        tow.ResetGame();
+    }
+
+    private int findPos()
+    {
+        bool[] seats = new bool[6];
+        for (int i=0; i<seats.Length; i++)
+        {
+            seats[i] = false;
+        }
+
+        int leftTeam = 0;
+        int rightTeam = 0;
+        for (int i=1; i<tow.transform.childCount; i++)
+        {
+            InputSys s = tow.transform.GetChild(i).GetComponent<InputSys>();
+            if (s == this) continue;
+            int p = s.pos;
+            seats[pos] = true;
+
+            if (s.team == 0) leftTeam++;
+            if (s.team == 1) rightTeam++;
+        }
+
+        if (leftTeam <= rightTeam)
+        {
+            if (seats[0] == false) return 0;
+            else if (seats[1] == false) return 1;
+            else if (seats[2] == false) return 2;
+            else return -1;
+        }
+        else
+        {
+            if (seats[3] == false) return 3;
+            else if (seats[4] == false) return 4;
+            else if (seats[5] == false) return 5;
+            else return -1;
+        }
     }
 
     private Vector2 getKeyPos(string key)
