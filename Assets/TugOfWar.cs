@@ -85,5 +85,4 @@ public class TugOfWar : NetworkBehaviour
         leftSideForce = 0;
         rightSideForce = 0;
     }
-    
 }

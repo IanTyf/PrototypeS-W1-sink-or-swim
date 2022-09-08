@@ -2,12 +2,15 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using FishNet.Object;
+using FishNet.Object.Synchronizing;
 
 public class InputSys : NetworkBehaviour
 {
     public Material mat;
 
+    [SyncVar]
     public int team;
+    [SyncVar]
     public int pos;
 
     public float leftForce;
@@ -89,26 +92,29 @@ public class InputSys : NetworkBehaviour
             */
 
             int p = findPos();
+            int t = -1;
             if (p == -1) Destroy(this.gameObject);
             else
             {
                 if (p < 3)
                 {
-                    team = 0;
-                    transform.localPosition = new Vector3(-6.791f * ((3f - p) / 3f), 0f, -0.17f);
+                    t = 0;
+                    transform.localPosition = new Vector3(-6.791f * ((3f - p) / 3f) - 3f, 0f, -0.17f);
                 }
                 else
                 {
-                    team = 1;
-                    transform.localPosition = new Vector3(6.791f * ((6f - p) / 3f), 0f, -0.17f);
+                    t = 1;
+                    transform.localPosition = new Vector3(6.791f * ((6f - p) / 3f) + 3f, 0f, -0.17f);
                     transform.localScale = new Vector3(1.8f, 1f, -1.5f);
                 }
+                pos = p;
             }
 
             GetComponent<BoxCollider>().enabled = true;
             transform.GetChild(0).GetChild(0).GetComponent<SkinnedMeshRenderer>().material = mat;
 
             addPlayer();
+            setTeamAndPos(t, pos);
             started = true;
         }
 
@@ -116,6 +122,12 @@ public class InputSys : NetworkBehaviour
         {
             resetGame();
         }
+
+        float fov = Camera.main.orthographicSize;
+        fov -= Input.GetAxis("Mouse ScrollWheel") * 5f;
+        fov = Mathf.Clamp(fov, 5, 15);
+        Camera.main.orthographicSize = fov;
+
 
         speedDown(1f);
         string curKeys = "";
@@ -255,6 +267,14 @@ public class InputSys : NetworkBehaviour
         tow.ResetGame();
     }
 
+    [ServerRpc]
+    private void setTeamAndPos(int _team, int _pos)
+    {
+        //tow.SetTeamAndPos(team, pos, this);
+        team = _team;
+        pos = _pos;
+    }
+
     private int findPos()
     {
         bool[] seats = new bool[6];
@@ -265,17 +285,17 @@ public class InputSys : NetworkBehaviour
 
         int leftTeam = 0;
         int rightTeam = 0;
-        for (int i=1; i<tow.transform.childCount; i++)
+        for (int i=1; i<tow.transform.childCount-1; i++)
         {
             InputSys s = tow.transform.GetChild(i).GetComponent<InputSys>();
-            if (s == this) continue;
-            int p = s.pos;
-            seats[pos] = true;
+            if (s.gameObject == this.gameObject) continue;
+            seats[s.pos] = true;
 
             if (s.team == 0) leftTeam++;
             if (s.team == 1) rightTeam++;
         }
 
+        Debug.Log(leftTeam + ", " + rightTeam);
         if (leftTeam <= rightTeam)
         {
             if (seats[0] == false) return 0;
