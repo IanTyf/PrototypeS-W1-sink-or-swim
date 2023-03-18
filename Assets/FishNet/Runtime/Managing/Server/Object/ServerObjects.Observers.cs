@@ -78,7 +78,6 @@ namespace FishNet.Managing.Server
             int observerIndex = 0;
             foreach (NetworkConnection conn in serverManager.Clients.Values)
             {
-
                 int cacheIndex = 0;
                 using (PooledWriter largeWriter = WriterPool.GetWriter())
                 {
@@ -110,13 +109,14 @@ namespace FishNet.Managing.Server
                         {
                             everyoneWriter.Reset();
                             ownerWriter.Reset();
-                            WriteSpawn(nob, conn, ref everyoneWriter, ref ownerWriter);
+                            base.WriteSpawn_Server(nob, conn, everyoneWriter, ownerWriter);
                             CacheObserverChange(nob, ref cacheIndex);
                         }
                         else if (osc == ObserverStateChange.Removed)
                         {
                             everyoneWriter.Reset();
-                            WriteDespawn(nob, nob.DisableOnDespawn, ref everyoneWriter);
+                            WriteDespawn(nob, nob.GetDefaultDespawnType(), everyoneWriter);
+
                         }
                         else
                         {
@@ -330,7 +330,7 @@ namespace FishNet.Managing.Server
             }
 
             void AddChildNetworkObjects(NetworkObject n)
-            {               
+            {
                 cache.AddValue(n);
                 foreach (NetworkObject nob in n.ChildNetworkObjects)
                     AddChildNetworkObjects(nob);
@@ -350,25 +350,35 @@ namespace FishNet.Managing.Server
             PooledWriter everyoneWriter = WriterPool.GetWriter();
             PooledWriter ownerWriter = WriterPool.GetWriter();
 
-            int observerCacheIndex = 0;
+            //If there's no limit on how many can be written set count to the maximum.
+            if (count == -1)
+                count = int.MaxValue;
+
+            int iterations;
+            int observerCacheIndex;
             using (PooledWriter largeWriter = WriterPool.GetWriter())
             {
+                iterations = 0;
                 observerCacheIndex = 0;
                 foreach (NetworkObject n in nobs)
                 {
+                    iterations++;
+                    if (iterations > count)
+                        break;
+
                     //If observer state changed then write changes.
                     ObserverStateChange osc = n.RebuildObservers(connection, false);
                     if (osc == ObserverStateChange.Added)
                     {
                         everyoneWriter.Reset();
                         ownerWriter.Reset();
-                        WriteSpawn(n, connection, ref everyoneWriter, ref ownerWriter);
+                        base.WriteSpawn_Server(n, connection, everyoneWriter, ownerWriter);
                         CacheObserverChange(n, ref observerCacheIndex);
                     }
                     else if (osc == ObserverStateChange.Removed)
                     {
                         everyoneWriter.Reset();
-                        WriteDespawn(n, n.DisableOnDespawn, ref everyoneWriter);
+                        WriteDespawn(n, n.GetDefaultDespawnType(), everyoneWriter);
                     }
                     else
                     {
@@ -418,9 +428,9 @@ namespace FishNet.Managing.Server
                 //If observer state changed then write changes.
                 ObserverStateChange osc = nob.RebuildObservers(conn, false);
                 if (osc == ObserverStateChange.Added)
-                    WriteSpawn(nob, conn, ref everyoneWriter, ref ownerWriter);
+                    base.WriteSpawn_Server(nob, conn, everyoneWriter, ownerWriter);
                 else if (osc == ObserverStateChange.Removed)
-                    WriteDespawn(nob, nob.DisableOnDespawn, ref everyoneWriter);
+                    WriteDespawn(nob, nob.GetDefaultDespawnType(), everyoneWriter);
                 else
                     continue;
 
@@ -453,7 +463,7 @@ namespace FishNet.Managing.Server
         /// Rebuilds observers for all connections for a NetworkObject.
         /// </summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        internal void RebuildObservers(NetworkObject nob)
+        public void RebuildObservers(NetworkObject nob)
         {
             ListCache<NetworkConnection> cache = ListCaches.GetNetworkConnectionCache();
             foreach (NetworkConnection item in NetworkManager.ServerManager.Clients.Values)

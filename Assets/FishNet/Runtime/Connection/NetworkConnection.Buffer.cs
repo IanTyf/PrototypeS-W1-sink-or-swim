@@ -30,7 +30,7 @@ namespace FishNet.Connection
         {
             for (byte i = 0; i < TransportManager.CHANNEL_COUNT; i++)
             {
-                int mtu = NetworkManager.TransportManager.Transport.GetMTU(i);
+                int mtu = NetworkManager.TransportManager.GetLowestMTU(i);
                 _toClientBundles.Add(new PacketBundle(NetworkManager, mtu));
             }
         }
@@ -46,14 +46,9 @@ namespace FishNet.Connection
         public void Broadcast<T>(T message, bool requireAuthenticated = true, Channel channel = Channel.Reliable) where T : struct, IBroadcast
         {
             if (!IsActive)
-            {
-                if (NetworkManager.CanLog(LoggingType.Error))
-                    Debug.LogError($"Connection is not valid, cannot send broadcast.");
-            }
+                NetworkManager.LogError($"Connection is not valid, cannot send broadcast.");
             else
-            {
                 NetworkManager.ServerManager.Broadcast<T>(this, message, requireAuthenticated, channel);
-            }
         }
 
         /// <summary>
@@ -65,10 +60,10 @@ namespace FishNet.Connection
             //Cannot send data when disconnecting.
             if (Disconnecting)
                 return;
+
             if (!IsActive)
             {
-                if (NetworkManager.CanLog(LoggingType.Warning))
-                    Debug.LogWarning($"Data cannot be sent to connection {ClientId} because it is not active.");
+                NetworkManager.LogWarning($"Data cannot be sent to connection {ClientId} because it is not active.");
                 return;
             }
             //If channel is out of bounds then default to the first channel.

@@ -10,6 +10,8 @@ namespace FishNet.Component.ColliderRollback
     {
         
 
+        
+
         #region Serialized.
         /// <summary>
         /// 
@@ -32,11 +34,13 @@ namespace FishNet.Component.ColliderRollback
 
         
 
+        
+
         /// <summary>
         /// Initializes this script for use.
         /// </summary>
         /// <param name="manager"></param>
-        internal void InitializeOnceInternal(NetworkManager manager)
+        internal void InitializeOnce_Internal(NetworkManager manager)
         {
             
         }

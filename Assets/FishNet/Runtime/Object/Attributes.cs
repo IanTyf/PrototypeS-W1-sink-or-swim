@@ -20,6 +20,12 @@ namespace FishNet.Object
         /// True to also run the RPC logic locally.
         /// </summary>
         public bool RunLocally = false;
+        /// <summary>
+        /// Estimated length of data being sent.
+        /// When a value other than -1 the minimum length of the used serializer will be this value.
+        /// This is useful for writing large packets which otherwise resize the serializer.
+        /// </summary>
+        public int DataLength = -1;
     }
 
     /// <summary>
@@ -29,9 +35,13 @@ namespace FishNet.Object
     public class ObserversRpcAttribute : Attribute
     {
         /// <summary>
-        /// True to also send data to the owner of object.
+        /// True to exclude the owner from receiving this RPC.
         /// </summary>
-        public bool IncludeOwner = true;
+        public bool ExcludeOwner = false;
+        /// <summary>
+        /// True to prevent the connection from receiving this Rpc if they are also server.
+        /// </summary>
+        public bool ExcludeServer = false;
         /// <summary>
         /// True to buffer the last value and send it to new players when the object is spawned for them.
         /// RPC will be sent on the same channel as the original RPC, and immediately before the OnSpawnServer override.
@@ -41,6 +51,12 @@ namespace FishNet.Object
         /// True to also run the RPC logic locally.
         /// </summary>
         public bool RunLocally = false;
+        /// <summary>
+        /// Estimated length of data being sent.
+        /// When a value other than -1 the minimum length of the used serializer will be this value.
+        /// This is useful for writing large packets which otherwise resize the serializer.
+        /// </summary>
+        public int DataLength = -1;
     }
 
     /// <summary>
@@ -50,9 +66,24 @@ namespace FishNet.Object
     public class TargetRpcAttribute : Attribute 
     {
         /// <summary>
+        /// True to prevent the connection from receiving this Rpc if they are also server.
+        /// </summary>
+        public bool ExcludeServer = false;
+        /// <summary>
         /// True to also run the RPC logic locally.
         /// </summary>
         public bool RunLocally = false;
+        /// <summary>
+        /// True to validate the target is possible and output debug when not.
+        /// Use this field with caution as it may create undesired results when set to false.
+        /// </summary>
+        public bool ValidateTarget = true;
+        /// <summary>
+        /// Estimated length of data being sent.
+        /// When a value other than -1 the minimum length of the used serializer will be this value.
+        /// This is useful for writing large packets which otherwise resize the serializer.
+        /// </summary>
+        public int DataLength = -1;
     }
 
     /// <summary>
@@ -104,6 +135,11 @@ namespace FishNet.Object.Synchronizing
         /// Clients which may receive value updates.
         /// </summary>
         public ReadPermission ReadPermissions = ReadPermission.Observers;
+        /// <summary>
+        /// True if to require the readonly attribute.
+        /// Setting to false will allow inspector serialization of this object, but you must never manually initialize this object.
+        /// </summary>
+        public bool RequireReadOnly = true;
     }
 
     /// <summary>
