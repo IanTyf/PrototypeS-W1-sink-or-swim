@@ -4,6 +4,7 @@ using UnityEngine;
 using FishNet.Object;
 using FishNet.Object.Synchronizing;
 using FishNet.Connection;
+using TMPro;
 
 public class InputSysPlus : NetworkBehaviour
 {
@@ -65,6 +66,15 @@ public class InputSysPlus : NetworkBehaviour
     // Update is called once per frame
     void Update()
     {
+        // make the name tag always facing -forward and correct scale
+        transform.GetChild(3).GetComponent<RectTransform>().position = transform.position + Vector3.up * 1.5f;
+
+        transform.GetChild(3).GetComponent<RectTransform>().rotation = Quaternion.identity;
+
+        transform.GetChild(3).GetComponent<RectTransform>().localScale = Vector3.one;
+        Vector3 lossyScale = transform.GetChild(3).GetComponent<RectTransform>().lossyScale;
+        transform.GetChild(3).GetComponent<RectTransform>().localScale = new Vector3(0.24f / lossyScale.x, 0.24f / lossyScale.y, 0.24f / lossyScale.z);
+
         if (!base.IsOwner) return;
 
         if (!started)
@@ -125,98 +135,117 @@ public class InputSysPlus : NetworkBehaviour
         // input stuff
         if (towP.gameState == 1) return;
 
-        string curKeys = "";
-
-        leftKeys = "";
-        rightKeys = "";
-
-        foreach (char c in Input.inputString)
+        if (Input.GetKey(KeyCode.Space))
         {
-            curKeys += c;
-            if ("`123456qwertasdfgzxcv~!@#$%^QWERTASDFGZXCV".Contains(c)) leftKeys += c;
-            if ("7890-=yuiop[]\\hjkl;'nm,./YUIOPHJKLNM&*()_+}{\":?><".Contains(c)) rightKeys += c;
-
-        }
-
-        if (curKeys.Equals(""))
-        {
-            return;
-        }
-
-        //else
-        //Debug.Log(allKeys);
-        //Debug.Log("left: " + leftKeys);
-        Debug.Log("right: " + rightKeys);
-
-        if (!leftKeys.Equals(""))
-        {
-            foreach (char c in leftKeys)
+            Debug.Log("name string: " + Input.inputString);
+            string s = Input.inputString.Trim();
+            foreach (char c in s)
             {
-                Vector2 newKeyPos = getKeyPos(c.ToString());
-                Vector2 prevLeftKeyPos = getKeyPos(prevLeftKey);
-                Vector2 newDir = newKeyPos - prevLeftKeyPos;
-
-                float signedAng = Vector2.SignedAngle(prevLeftDir, newDir);
-
-                prevLeftKey = c.ToString();
-                prevLeftDir = newDir;
-
-                if (signedAng > 0f && signedAng <= 100f)
+                // tell server to change the name of this object and broadcast to everyone
+                if (!c.Equals(" "))
                 {
-                    // success
-                    leftForce += Time.deltaTime * 10f;
-
-                    speedUp(50f);
-
-                    //if (team == 0) addToLeft(Time.deltaTime * 10f);
-                    //else if (team == 1) addToRight(Time.deltaTime * 10f);
-                    addToTowP(Time.deltaTime * 10f, -Time.deltaTime * 50f, playerID);
-
-                    break;
-                }
-                else
-                {
-                    // failure, do nothing
+                    if ("`123456qwertasdfgzxcv~!@#$%^QWERTASDFGZXCV".Contains(c) || "7890-=yuiop[]\\hjkl;'nm,./YUIOPHJKLNM&*()_+}{\":?><".Contains(c))
+                    {
+                        changeName(c.ToString());
+                    }
                 }
             }
-        }
 
-        if (!rightKeys.Equals(""))
-        {
-            foreach (char c in rightKeys)
+            if (Input.GetKeyDown(KeyCode.Backspace))
             {
-                Vector2 newKeyPos = getKeyPos(c.ToString());
-                Vector2 prevLeftKeyPos = getKeyPos(prevRightKey);
-                Vector2 newDir = newKeyPos - prevLeftKeyPos;
-
-                float signedAng = Vector2.SignedAngle(prevRightDir, newDir);
-
-                prevRightKey = c.ToString();
-                prevRightDir = newDir;
-
-                if (signedAng < 0f && signedAng >= -100f)
-                {
-                    // success
-                    rightForce += Time.deltaTime * 10f;
-
-                    speedUp(50f);
-
-                    //if (team == 0) addToLeft(Time.deltaTime * 10f);
-                    //else if (team == 1) addToRight(Time.deltaTime * 10f);
-                    addToTowP(Time.deltaTime * 10f, Time.deltaTime * 50f, playerID);
-
-                    break;
-                }
-                else
-                {
-                    // failure, do nothing
-                }
+                changeName("backSpace");
             }
         }
-
-        if (rightKeys.Equals("") && !leftKeys.Equals(""))
+        else
         {
-            //addToTowP(0f, transform.position, )
+            string curKeys = "";
+
+            leftKeys = "";
+            rightKeys = "";
+
+            foreach (char c in Input.inputString)
+            {
+                curKeys += c;
+                if ("`123456qwertasdfgzxcv~!@#$%^QWERTASDFGZXCV".Contains(c)) leftKeys += c;
+                if ("7890-=yuiop[]\\hjkl;'nm,./YUIOPHJKLNM&*()_+}{\":?><".Contains(c)) rightKeys += c;
+
+            }
+
+            if (curKeys.Equals(""))
+            {
+                return;
+            }
+
+            //else
+            //Debug.Log(allKeys);
+            //Debug.Log("left: " + leftKeys);
+            Debug.Log("right: " + rightKeys);
+
+            if (!leftKeys.Equals(""))
+            {
+                foreach (char c in leftKeys)
+                {
+                    Vector2 newKeyPos = getKeyPos(c.ToString());
+                    Vector2 prevLeftKeyPos = getKeyPos(prevLeftKey);
+                    Vector2 newDir = newKeyPos - prevLeftKeyPos;
+
+                    float signedAng = Vector2.SignedAngle(prevLeftDir, newDir);
+
+                    prevLeftKey = c.ToString();
+                    prevLeftDir = newDir;
+
+                    if (signedAng > 0f && signedAng <= 100f)
+                    {
+                        // success
+                        leftForce += Time.deltaTime * 10f;
+
+                        speedUp(50f);
+
+                        //if (team == 0) addToLeft(Time.deltaTime * 10f);
+                        //else if (team == 1) addToRight(Time.deltaTime * 10f);
+                        addToTowP(Time.deltaTime * 10f, -Time.deltaTime * 50f, playerID);
+
+                        break;
+                    }
+                    else
+                    {
+                        // failure, do nothing
+                    }
+                }
+            }
+
+            if (!rightKeys.Equals(""))
+            {
+                foreach (char c in rightKeys)
+                {
+                    Vector2 newKeyPos = getKeyPos(c.ToString());
+                    Vector2 prevLeftKeyPos = getKeyPos(prevRightKey);
+                    Vector2 newDir = newKeyPos - prevLeftKeyPos;
+
+                    float signedAng = Vector2.SignedAngle(prevRightDir, newDir);
+
+                    prevRightKey = c.ToString();
+                    prevRightDir = newDir;
+
+                    if (signedAng < 0f && signedAng >= -100f)
+                    {
+                        // success
+                        rightForce += Time.deltaTime * 10f;
+
+                        speedUp(50f);
+
+                        //if (team == 0) addToLeft(Time.deltaTime * 10f);
+                        //else if (team == 1) addToRight(Time.deltaTime * 10f);
+                        addToTowP(Time.deltaTime * 10f, Time.deltaTime * 50f, playerID);
+
+                        break;
+                    }
+                    else
+                    {
+                        // failure, do nothing
+                    }
+                }
+            }
         }
 
     }
@@ -306,6 +335,51 @@ public class InputSysPlus : NetworkBehaviour
     private void serverReset()
     {
         towP.ServerReset();
+    }
+
+    [ServerRpc]
+    private void changeName(string c)
+    {
+        if (c.Equals("backSpace"))
+        {
+            string s = transform.GetChild(3).GetComponent<TMP_Text>().text;
+            if (s.Length > 0)
+                transform.GetChild(3).GetComponent<TMP_Text>().text = s.Substring(0, s.Length-1);
+        }
+        else
+        {
+            transform.GetChild(3).GetComponent<TMP_Text>().text += c;
+            string s = transform.GetChild(3).GetComponent<TMP_Text>().text;
+            if (s.Length > 8)
+            {
+                transform.GetChild(3).GetComponent<TMP_Text>().text = s.Substring(1, 8);
+            }
+        }
+        syncName(transform.GetChild(3).GetComponent<TMP_Text>().text);
+
+        // change color based on c and sync it
+        if (transform.GetChild(3).GetComponent<TMP_Text>().text.Length > 0)
+        {
+            int ascii = (int)transform.GetChild(3).GetComponent<TMP_Text>().text[transform.GetChild(3).GetComponent<TMP_Text>().text.Length - 1];
+            Color newColor = Color.HSVToRGB((ascii % 26) / 26f, 0.5f, 1f);
+            //transform.GetChild(3).GetComponent<TMP_Text>().color = newColor;
+            transform.GetChild(0).GetChild(0).GetComponent<SkinnedMeshRenderer>().material.color = newColor;
+
+            syncColor(newColor);
+        }
+    }
+
+    [ObserversRpc]
+    private void syncName(string n)
+    {
+        transform.GetChild(3).GetComponent<TMP_Text>().text = n;
+    }
+
+    [ObserversRpc]
+    private void syncColor(Color c)
+    {
+        //transform.GetChild(3).GetComponent<TMP_Text>().color = c;
+        transform.GetChild(0).GetChild(0).GetComponent<SkinnedMeshRenderer>().material.color = c;
     }
 
     private Vector2 getKeyPos(string key)

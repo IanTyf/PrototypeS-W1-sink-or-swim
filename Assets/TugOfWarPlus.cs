@@ -131,7 +131,7 @@ public class TugOfWarPlus : NetworkBehaviour
             if (gameState == 2)
             {
                 growTimer += Time.fixedDeltaTime;
-                lava.transform.localScale = Vector3.one * (6 + growTimer * 0.2f);
+                lava.transform.localScale = Vector3.one * (6 + growTimer * 0.5f);
             }
 
 
